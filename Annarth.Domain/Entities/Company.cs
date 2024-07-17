@@ -1,11 +1,16 @@
-﻿namespace Annarth.Domain.Entities
+﻿using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Bson;
+
+namespace Annarth.Domain.Entities
 {
     public class Company
     {
         /// <summary>
         /// Id Company
         /// </summary>
-        public int Id { get; set; }
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public ObjectId Id { get; set; }
 
         /// <summary>
         /// Company Name

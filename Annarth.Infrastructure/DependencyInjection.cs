@@ -1,10 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Annarth.Application.Interface.IRepository;
-using Annarth.Application.Interface.IService;
-using Annarth.Application.Service;
+using Microsoft.Extensions.Options;
 using Annarth.Infrastructure.Repository;
+using Annarth.Domain;
+using Annarth.Application.Service;
+using Annarth.Application.Interface.IService;
+using Annarth.Application.Interface.IRepository;
 
 namespace Annarth.Infrastructure
 {
@@ -12,10 +13,23 @@ namespace Annarth.Infrastructure
     {
         public static IServiceCollection ImplementPersistence(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContext<AnnarthDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("StringConnectionSqlServer")));
+            // Configurar la conexión a MongoDB
+            services.Configure<MongoDbSettings>(options =>
+            {
+                configuration.GetSection("MongoDbSettings").Bind(options);
+            });
 
+            // Asegúrate de que MongoDbSettings está registrado correctamente
+            services.AddSingleton(sp => sp.GetRequiredService<IOptions<MongoDbSettings>>().Value);
+
+            services.AddSingleton<AnnarthMongoDbContext>();
+
+            // Registrar servicios específicos para MongoDB
             services.AddTransient<IEmployeeService, EmployeeService>();
             services.AddTransient<IEmployeeRepository, EmployeeRepository>();
+
+            services.AddTransient<ICompanyService, CompanyService>();
+            services.AddTransient<ICompanyRepository, CompanyRepository>();
 
             return services;
         }

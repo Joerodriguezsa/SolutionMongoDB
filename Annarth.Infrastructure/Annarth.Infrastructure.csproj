@@ -11,10 +11,12 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.2" />
+    <PackageReference Include="MongoDB.Driver" Version="2.27.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Annarth.Aplication\Annarth.Aplication.csproj" />
+    <ProjectReference Include="..\Annarth.Aplication\Annarth.Application.csproj" />
     <ProjectReference Include="..\Annarth.Domain\Annarth.Domain.csproj" />
   </ItemGroup>
 

@@ -2,6 +2,7 @@
 using Annarth.Application.Interface.IService;
 using Annarth.Domain.DTO;
 using Annarth.Domain.Entities;
+using MongoDB.Bson;
 
 namespace Annarth.Application.Service
 {
@@ -14,7 +15,7 @@ namespace Annarth.Application.Service
             _EmployeeRepository = EmployeeRepository;
         }
 
-        public async Task<Employee> GetByIdAsync(int id)
+        public async Task<Employee> GetByIdAsync(ObjectId id)
         {
             return await _EmployeeRepository.GetByIdAsync(id);
         }
@@ -34,7 +35,7 @@ namespace Annarth.Application.Service
             return await _EmployeeRepository.UpdateAsync(Employee);
         }
 
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(ObjectId id)
         {
             return await _EmployeeRepository.DeleteAsync(id);
         }

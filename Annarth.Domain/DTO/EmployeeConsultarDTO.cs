@@ -1,11 +1,12 @@
 ﻿using Annarth.Domain.Entities;
+using MongoDB.Bson;
 using System.ComponentModel.DataAnnotations;
 
 namespace Annarth.Domain.DTO
 {
     public class EmployeeConsultarDTO
     {
-        public int Id { get; set; }
+        public ObjectId Id { get; set; }
 
         public int CompanyId { get; set; }
 

@@ -8,11 +8,12 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="13.0.1" />
+    <PackageReference Include="MongoDB.Driver" Version="2.27.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Annarth.Aplication\Annarth.Aplication.csproj" />
+    <ProjectReference Include="..\Annarth.Aplication\Annarth.Application.csproj" />
     <ProjectReference Include="..\Annarth.Infrastructure\Annarth.Infrastructure.csproj" />
   </ItemGroup>
 

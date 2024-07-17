@@ -5,6 +5,7 @@ using Annarth.Application.Interface.IService;
 using Annarth.Application.Service;
 using Annarth.Domain.DTO;
 using Annarth.Domain.Entities;
+using MongoDB.Bson;
 
 namespace Annarth.API.Controllers
 {
@@ -12,43 +13,56 @@ namespace Annarth.API.Controllers
     [ApiController]
     public class EmployeeController : ControllerBase
     {
-        private readonly IEmployeeService _EmployeeService;
+        private readonly IEmployeeService _employeeService;
         private readonly IMapper _mapper;
 
-        public EmployeeController(IEmployeeService EmployeeService, IMapper mapper)
+        public EmployeeController(IEmployeeService employeeService, IMapper mapper)
         {
-            _EmployeeService = EmployeeService;
+            _employeeService = employeeService;
             _mapper = mapper;
         }
 
         [HttpPost]
-        public async Task<ActionResult<EmployeeConsultarDTO>> Create(EmployeeCrearDTO EmployeeDTO)
+        public async Task<ActionResult<EmployeeConsultarDTO>> Create(EmployeeCrearDTO employeeDTO)
         {
-            var Employee = _mapper.Map<Employee>(EmployeeDTO);
-            await _EmployeeService.CreateAsync(Employee);
-            var EmployeeConsultarDTO = _mapper.Map<EmployeeConsultarDTO>(Employee);
-            return CreatedAtAction(nameof(GetById), new { id = EmployeeConsultarDTO.Id }, EmployeeConsultarDTO);
+            var employee = _mapper.Map<Employee>(employeeDTO);
+            await _employeeService.CreateAsync(employee);
+            var employeeConsultarDTO = _mapper.Map<EmployeeConsultarDTO>(employee);
+            return CreatedAtAction(nameof(GetById), new { id = employeeConsultarDTO.Id }, employeeConsultarDTO);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<EmployeeConsultarDTO>> Update(int id, EmployeeActulizarDTO EmployeeDTO)
+        public async Task<ActionResult<EmployeeConsultarDTO>> Update([FromRoute] string id, [FromBody] EmployeeActulizarDTO employeeDTO)
         {
-            var Employee = _mapper.Map<Employee>(EmployeeDTO);
-            Employee.Id = id;
-
-            var updatedEmployee = await _EmployeeService.UpdateAsync(Employee);
-            if (updatedEmployee != null)
+            if (!ObjectId.TryParse(id, out ObjectId objectId))
             {
-                var EmployeeConsultarDTO = _mapper.Map<EmployeeConsultarDTO>(updatedEmployee);
-                return Ok(EmployeeConsultarDTO);
+                return BadRequest("Invalid ObjectId format");
             }
-            return NotFound();
+
+            var employee = await _employeeService.GetByIdAsync(objectId);
+            if (employee == null)
+            {
+                return NotFound();
+            }
+
+            // Aplicar las actualizaciones al objeto existente
+            _mapper.Map(employeeDTO, employee);
+
+            var updatedEmployee = await _employeeService.UpdateAsync(employee);
+
+            var employeeConsultarDTO = _mapper.Map<EmployeeConsultarDTO>(updatedEmployee);
+            return Ok(employeeConsultarDTO);
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(string id)
         {
-            if (await _EmployeeService.DeleteAsync(id))
+            if (!ObjectId.TryParse(id, out ObjectId objectId))
+            {
+                return BadRequest("Invalid ObjectId format");
+            }
+
+            if (await _employeeService.DeleteAsync(objectId))
             {
                 return NoContent();
             }
@@ -56,31 +70,39 @@ namespace Annarth.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<EmployeeConsultarDTO>> GetById(int id)
+        public async Task<ActionResult<EmployeeConsultarDTO>> GetById(string id)
         {
-            var Employee = await _EmployeeService.GetByIdAsync(id);
-            if (Employee == null)
+            if (!ObjectId.TryParse(id, out ObjectId objectId))
+            {
+                return BadRequest("Invalid ObjectId format");
+            }
+
+            var employee = await _employeeService.GetByIdAsync(objectId);
+            if (employee == null)
             {
                 return NotFound();
             }
-            var EmployeeConsultarDTO = _mapper.Map<EmployeeConsultarDTO>(Employee);
-            return Ok(EmployeeConsultarDTO);
+
+            var employeeConsultarDTO = _mapper.Map<EmployeeConsultarDTO>(employee);
+            return Ok(employeeConsultarDTO);
         }
 
         [HttpGet]
         public async Task<ActionResult<List<EmployeeConsultarDTO>>> GetAll()
         {
-            var Employeees = await _EmployeeService.GetAllAsync();
-            var EmployeeConsultarDTOs = _mapper.Map<List<EmployeeConsultarDTO>>(Employeees);
-            return Ok(EmployeeConsultarDTOs);
+            var employees = await _employeeService.GetAllAsync();
+            var employeeConsultarDTOs = _mapper.Map<List<EmployeeConsultarDTO>>(employees);
+            return Ok(employeeConsultarDTOs);
         }
 
         [HttpGet("filter")]
         public async Task<ActionResult<List<EmployeeConsultarDTO>>> GetFiltered([FromQuery] EmployeeFiltrarDTO filtro)
         {
-            var Employees = await _EmployeeService.GetFilteredAsync(filtro);
-            var EmployeeConsultarDTOs = _mapper.Map<List<EmployeeConsultarDTO>>(Employees);
-            return Ok(EmployeeConsultarDTOs);
+            var employees = await _employeeService.GetFilteredAsync(filtro);
+            var employeeConsultarDTOs = _mapper.Map<List<EmployeeConsultarDTO>>(employees);
+            return Ok(employeeConsultarDTOs);
         }
     }
 }
+
+

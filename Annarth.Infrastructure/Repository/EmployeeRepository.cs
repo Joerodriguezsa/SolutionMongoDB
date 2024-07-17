@@ -3,14 +3,16 @@ using Annarth.Application.Interface.IRepository;
 using Annarth.Domain.DTO;
 using Annarth.Domain.Entities;
 using System.Data;
+using MongoDB.Driver;
+using MongoDB.Bson;
 
 namespace Annarth.Infrastructure.Repository
 {
     public class EmployeeRepository : IEmployeeRepository
     {
-        private readonly AnnarthDbContext _annarthDbContext;
+        private readonly AnnarthMongoDbContext _annarthDbContext;
 
-        public EmployeeRepository(AnnarthDbContext annarthDbContext)
+        public EmployeeRepository(AnnarthMongoDbContext annarthDbContext)
         {
             _annarthDbContext = annarthDbContext;
         }
@@ -20,9 +22,9 @@ namespace Annarth.Infrastructure.Repository
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public async Task<Employee> GetByIdAsync(int id)
+        public async Task<Employee> GetByIdAsync(ObjectId id)
         {
-            return await _annarthDbContext.Employee.Include(w => w.Company).FirstOrDefaultAsync(e => e.Id == id);
+            return await _annarthDbContext.Employees.Find(e => e.Id == id).FirstOrDefaultAsync();
         }
 
         /// <summary>
@@ -31,63 +33,28 @@ namespace Annarth.Infrastructure.Repository
         /// <returns></returns>
         public async Task<List<Employee>> GetAllAsync()
         {
-            return await _annarthDbContext.Employee.Include(w => w.Company).ToListAsync();
+            return await _annarthDbContext.Employees.Find(_ => true).ToListAsync();
         }
 
         /// <summary>
         /// Creacion de Employee
         /// </summary>
-        /// <param name="Employee"></param>
-        /// <returns>Registrado Creado</returns>
-        public async Task CreateAsync(Employee Employee)
+        /// <param name="employee"></param>
+        /// <returns></returns>
+        public async Task CreateAsync(Employee employee)
         {
-            _annarthDbContext.Employee.Add(Employee);
-            await _annarthDbContext.SaveChangesAsync();
+            await _annarthDbContext.Employees.InsertOneAsync(employee);
         }
 
         /// <summary>
         /// Actualizacion de Employee
         /// </summary>
-        /// <param name="Employee"></param>
+        /// <param name="employee"></param>
         /// <returns></returns>
-        public async Task<Employee> UpdateAsync(Employee Employee)
+        public async Task<Employee> UpdateAsync(Employee employee)
         {
-            var existingEmployee = await _annarthDbContext.Employee.FirstOrDefaultAsync(r => r.Id == Employee.Id);
-
-            if (existingEmployee != null)
-            {
-                existingEmployee.CompanyId = Employee.CompanyId;
-                existingEmployee.CreatedOn = Employee.CreatedOn;
-                existingEmployee.DeletedOn = Employee.DeletedOn;
-                existingEmployee.Email = Employee.Email;
-                existingEmployee.Fax = Employee.Fax;
-                existingEmployee.Name = Employee.Name;
-                existingEmployee.Lastlogin = Employee.Lastlogin;
-                existingEmployee.Password = Employee.Password;
-                existingEmployee.PortalId = Employee.PortalId;
-                existingEmployee.RoleId = Employee.RoleId;
-                existingEmployee.StatusId = Employee.StatusId;
-                existingEmployee.Telephone = Employee.Telephone;
-                existingEmployee.UpdatedOn = Employee.UpdatedOn;
-                existingEmployee.Username = Employee.Username;
-
-        _annarthDbContext.Entry(existingEmployee).State = EntityState.Modified;
-
-                try
-                {
-                    await _annarthDbContext.SaveChangesAsync();
-                    return existingEmployee;
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!EmployeeExists(Employee.Id))
-                    {
-                        return null;
-                    }
-                    throw;
-                }
-            }
-            return null;
+            var result = await _annarthDbContext.Employees.ReplaceOneAsync(e => e.Id == employee.Id, employee);
+            return result.IsAcknowledged ? employee : null;
         }
 
         /// <summary>
@@ -95,27 +62,10 @@ namespace Annarth.Infrastructure.Repository
         /// </summary>
         /// <param name="id"></param>
         /// <returns>Bool</returns>
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(ObjectId id)
         {
-            var Employee = await _annarthDbContext.Employee.FindAsync(id);
-            if (Employee == null)
-            {
-                return false;
-            }
-
-            _annarthDbContext.Employee.Remove(Employee);
-            await _annarthDbContext.SaveChangesAsync();
-            return true;
-        }
-
-        /// <summary>
-        /// Validacion si existe Employee
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns>Bool</returns>
-        private bool EmployeeExists(int id)
-        {
-            return _annarthDbContext.Employee.Any(e => e.Id == id);
+            var result = await _annarthDbContext.Employees.DeleteOneAsync(e => e.Id == id);
+            return result.IsAcknowledged && result.DeletedCount > 0;
         }
 
         /// <summary>
@@ -125,55 +75,54 @@ namespace Annarth.Infrastructure.Repository
         /// <returns></returns>
         public async Task<List<Employee>> GetFilteredAsync(EmployeeFiltrarDTO criteria)
         {
-            IQueryable<Employee> query = _annarthDbContext.Employee.Include(w => w.Company);
+            var filter = Builders<Employee>.Filter.Empty;
 
-            if (criteria.CompanyId.HasValue)
-            {
-                query = query.Where(e => e.CompanyId == criteria.CompanyId.Value);
-            }
+            //if (criteria.CompanyId.HasValue)
+            //{
+            //    filter &= Builders<Employee>.Filter.Eq(e => e.CompanyId, criteria.CompanyId.Value);
+            //}
 
             if (!string.IsNullOrEmpty(criteria.CompanyName))
             {
-                query = query.Where(e => e.Company.CompanyName.Contains(criteria.CompanyName));
+                filter &= Builders<Employee>.Filter.Where(e => e.Company.CompanyName.Contains(criteria.CompanyName));
             }
 
             if (!string.IsNullOrEmpty(criteria.Email))
             {
-                query = query.Where(e => e.Email.Contains(criteria.Email));
+                filter &= Builders<Employee>.Filter.Where(e => e.Email.Contains(criteria.Email));
             }
 
             if (!string.IsNullOrEmpty(criteria.Fax))
             {
-                query = query.Where(e => e.Fax.Contains(criteria.Fax));
+                filter &= Builders<Employee>.Filter.Where(e => e.Fax.Contains(criteria.Fax));
             }
 
             if (!string.IsNullOrEmpty(criteria.Name))
             {
-                query = query.Where(e => e.Name.Contains(criteria.Name));
+                filter &= Builders<Employee>.Filter.Where(e => e.Name.Contains(criteria.Name));
             }
 
             if (!string.IsNullOrEmpty(criteria.Username))
             {
-                query = query.Where(e => e.Username.Contains(criteria.Username));
+                filter &= Builders<Employee>.Filter.Where(e => e.Username.Contains(criteria.Username));
             }
 
             if (criteria.RoleId.HasValue)
             {
-                query = query.Where(e => e.RoleId == criteria.RoleId.Value);
+                filter &= Builders<Employee>.Filter.Eq(e => e.RoleId, criteria.RoleId.Value);
             }
 
             if (criteria.StatusId.HasValue)
             {
-                query = query.Where(e => e.StatusId == criteria.StatusId.Value);
+                filter &= Builders<Employee>.Filter.Eq(e => e.StatusId, criteria.StatusId.Value);
             }
 
             if (!string.IsNullOrEmpty(criteria.Telephone))
             {
-                query = query.Where(e => e.Telephone.Contains(criteria.Telephone));
+                filter &= Builders<Employee>.Filter.Where(e => e.Telephone.Contains(criteria.Telephone));
             }
 
-            return await query.ToListAsync();
+            return await _annarthDbContext.Employees.Find(filter).ToListAsync();
         }
-
     }
 }

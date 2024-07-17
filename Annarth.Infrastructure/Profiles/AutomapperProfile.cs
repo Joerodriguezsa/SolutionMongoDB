@@ -12,6 +12,10 @@ namespace Annarth.Infrastructure.Profiles
             CreateMap<EmployeeCrearDTO, Employee>();
             CreateMap<EmployeeActulizarDTO, Employee>();
             CreateMap<EmployeeFiltrarDTO, Employee>();
+
+            CreateMap<Company, CompanyConsultarDTO>().ReverseMap();
+            CreateMap<CompanyCrearDTO, Company>();
+            CreateMap<CompanyActualizarDTO, Company>();
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+using System.ComponentModel.DataAnnotations;
 
 namespace Annarth.Domain.Entities
 {
@@ -7,8 +9,9 @@ namespace Annarth.Domain.Entities
         /// <summary>
         /// Id de la tabla
         /// </summary>
-        [Key]
-        public int Id { get; set; }
+        [BsonId]
+        [BsonRepresentation(BsonType.ObjectId)]
+        public ObjectId Id { get; set; }
 
         /// <summary>
         /// Campo relacionado Compañia Id
@@ -18,44 +21,36 @@ namespace Annarth.Domain.Entities
         /// <summary>
         /// Fecha Registro Empleado
         /// </summary>
-        [Required(ErrorMessage = "Campo CreatedOn es requerido")]
-        [DataType(DataType.DateTime)]
         public DateTime CreatedOn { get; set; }
 
         /// <summary>
         /// Fecha Borrado Empleado
         /// </summary>
-        [DataType(DataType.DateTime)]
         public DateTime? DeletedOn { get; set; }
 
         /// <summary>
         /// Email del Empleado
         /// </summary>
-        [StringLength(150)]
         public string Email { get; set; }
 
         /// <summary>
         /// Fax del Empleado
         /// </summary>
-        [StringLength(150)]
         public string Fax { get; set; }
 
         /// <summary>
         /// Nombre del Empleado
         /// </summary>
-        [StringLength(150)]
         public string Name { get; set; }
 
         /// <summary>
         /// Fecha Ultimo Logueo
         /// </summary>
-        [DataType(DataType.DateTime)]
         public DateTime? Lastlogin { get; set; }
 
         /// <summary>
         /// Contraseña del Empleado
         /// </summary>
-        [StringLength(150)]
         public string Password { get; set; }
 
         /// <summary>
@@ -76,19 +71,16 @@ namespace Annarth.Domain.Entities
         /// <summary>
         /// Telefono del Empleado
         /// </summary>
-        [StringLength(150)]
         public string Telephone { get; set; }
 
         /// <summary>
         /// Fecha de Actualizacion del Empleado
         /// </summary>
-        [DataType(DataType.DateTime)]
         public DateTime? UpdatedOn { get; set; }
 
         /// <summary>
         /// Campo UserName del Empleado
         /// </summary>
-        [StringLength(150)]
         public string Username { get; set; }
 
         /// <summary>
