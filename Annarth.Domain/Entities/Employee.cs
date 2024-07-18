@@ -14,11 +14,6 @@ namespace Annarth.Domain.Entities
         public ObjectId Id { get; set; }
 
         /// <summary>
-        /// Campo relacionado Compañia Id
-        /// </summary>
-        public int CompanyId { get; set; }
-
-        /// <summary>
         /// Fecha Registro Empleado
         /// </summary>
         public DateTime CreatedOn { get; set; }
@@ -84,9 +79,12 @@ namespace Annarth.Domain.Entities
         public string Username { get; set; }
 
         /// <summary>
-        /// Relación con la tabla Company
-        /// (clave foránea).
+        /// Relación con la tabla Company (clave foránea).
         /// </summary>
-        public virtual Company Company { get; set; }
+        [BsonRepresentation(BsonType.ObjectId)]
+        public ObjectId CompanyId { get; set; }
+
+        [BsonIgnore]
+        public Company Company { get; set; }
     }
 }

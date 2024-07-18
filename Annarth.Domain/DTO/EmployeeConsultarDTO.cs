@@ -6,9 +6,7 @@ namespace Annarth.Domain.DTO
 {
     public class EmployeeConsultarDTO
     {
-        public ObjectId Id { get; set; }
-
-        public int CompanyId { get; set; }
+        public string Id { get; set; }
 
         [Required(ErrorMessage = "Campo CreatedOn es requerido")]
         [DataType(DataType.DateTime)]
@@ -31,11 +29,8 @@ namespace Annarth.Domain.DTO
 
         [StringLength(150)]
         public string Password { get; set; }
-
         public int PortalId { get; set; }
-
         public int RoleId { get; set; }
-
         public int StatusId { get; set; }
 
         [StringLength(150)]
@@ -46,10 +41,7 @@ namespace Annarth.Domain.DTO
 
         [StringLength(150)]
         public string Username { get; set; }
-
-        /// <summary>
-        /// Relación con la tabla Company (clave foránea).
-        /// </summary>
-        public virtual Company Company { get; set; }
+        public string CompanyId { get; set; }
+        public CompanyConsultarDTO Company { get; set; }
     }
 }

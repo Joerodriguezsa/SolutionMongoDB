@@ -22,9 +22,22 @@ namespace Annarth.Infrastructure.Repository
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
+        //public async Task<Employee> GetByIdAsync(ObjectId id)
+        //{
+        //    return await _annarthDbContext.Employees.Find(e => e.Id == id).FirstOrDefaultAsync();
+        //}
         public async Task<Employee> GetByIdAsync(ObjectId id)
         {
-            return await _annarthDbContext.Employees.Find(e => e.Id == id).FirstOrDefaultAsync();
+            var filter = Builders<Employee>.Filter.Eq(e => e.Id, id);
+            var employee = await _annarthDbContext.Employees.Find(filter).FirstOrDefaultAsync();
+
+            if (employee != null)
+            {
+                var companyFilter = Builders<Company>.Filter.Eq(c => c.Id, employee.CompanyId);
+                employee.Company = await _annarthDbContext.Companies.Find(companyFilter).FirstOrDefaultAsync();
+            }
+
+            return employee;
         }
 
         /// <summary>
@@ -33,7 +46,22 @@ namespace Annarth.Infrastructure.Repository
         /// <returns></returns>
         public async Task<List<Employee>> GetAllAsync()
         {
-            return await _annarthDbContext.Employees.Find(_ => true).ToListAsync();
+            var employees = await _annarthDbContext.Employees.Find(_ => true).ToListAsync();
+
+            var companyIds = employees.Select(e => e.CompanyId).Distinct().ToList();
+            var companies = await _annarthDbContext.Companies.Find(c => companyIds.Contains(c.Id)).ToListAsync();
+
+            var companyDictionary = companies.ToDictionary(c => c.Id);
+
+            foreach (var employee in employees)
+            {
+                if (companyDictionary.TryGetValue(employee.CompanyId, out var company))
+                {
+                    employee.Company = company;
+                }
+            }
+
+            return employees;
         }
 
         /// <summary>
@@ -77,14 +105,13 @@ namespace Annarth.Infrastructure.Repository
         {
             var filter = Builders<Employee>.Filter.Empty;
 
-            //if (criteria.CompanyId.HasValue)
-            //{
-            //    filter &= Builders<Employee>.Filter.Eq(e => e.CompanyId, criteria.CompanyId.Value);
-            //}
-
             if (!string.IsNullOrEmpty(criteria.CompanyName))
             {
-                filter &= Builders<Employee>.Filter.Where(e => e.Company.CompanyName.Contains(criteria.CompanyName));
+                var companyFilter = Builders<Company>.Filter.Where(c => c.CompanyName.Contains(criteria.CompanyName));
+                var companies = await _annarthDbContext.Companies.Find(companyFilter).ToListAsync();
+                var companyIds = companies.Select(c => c.Id).ToList();
+
+                filter &= Builders<Employee>.Filter.In(e => e.CompanyId, companyIds);
             }
 
             if (!string.IsNullOrEmpty(criteria.Email))
@@ -122,7 +149,20 @@ namespace Annarth.Infrastructure.Repository
                 filter &= Builders<Employee>.Filter.Where(e => e.Telephone.Contains(criteria.Telephone));
             }
 
-            return await _annarthDbContext.Employees.Find(filter).ToListAsync();
+            var employees = await _annarthDbContext.Employees.Find(filter).ToListAsync();
+            var companyIdsToLoad = employees.Select(e => e.CompanyId).Distinct().ToList();
+            var companiesDictionary = (await _annarthDbContext.Companies.Find(c => companyIdsToLoad.Contains(c.Id)).ToListAsync())
+                                      .ToDictionary(c => c.Id);
+
+            foreach (var employee in employees)
+            {
+                if (companiesDictionary.TryGetValue(employee.CompanyId, out var company))
+                {
+                    employee.Company = company;
+                }
+            }
+
+            return employees;
         }
     }
 }
